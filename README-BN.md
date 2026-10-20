@@ -90,67 +90,10 @@
 
 **এখনকার অবস্থা:** সাইটের frontend GitHub Pages-এ serve করা যাবে, কিন্তু Firebase config-এর ৩টি placeholder পূরণ না করা পর্যন্ত Login/Database/Storage feature কাজ করবে না। আমি আপনার Firebase Console-এ প্রবেশ করতে পারি না, তাই ওই মানগুলো অনুমান করে বসানো হয়নি।
 
----
 
-## নতুন Admin Control Panel (এই সংস্করণে)
-
-এই সংস্করণে `admin.html` আলাদা Admin page হিসেবে যোগ করা হয়েছে। মূল ওয়েবসাইটের Login পপ-আপ থেকে **Admin Login** নির্বাচন করলে অনুমোদিত Admin সফলভাবে লগইন করার পর এই পেজে যাবে। সরাসরি `your-site-url/admin.html` খুললেও Admin Login চাইবে। কেবল পেজের URL লুকানো নিরাপত্তা নয়; Firestore Rules-এ `admins/{UID}` এবং `active: true` যাচাই করা হয়।
-
-### প্রথমবার Admin সেটআপ
-
-1. Firebase Console → **Authentication → Sign-in method** খুলুন।
-2. **Email/Password** provider Enable করুন। Google login রাখতে চাইলে Google provider-ও Enable রাখুন। Email verification বাধ্যতামূলক করা হয়নি।
-3. Authentication → Users থেকে Owner-এর email/password account তৈরি করুন, অথবা সাইটের Customer Login → “নতুন অ্যাকাউন্ট তৈরি করুন” দিয়ে ওই email-এ account বানান। পাসওয়ার্ড শুধু Firebase Authentication-এ সেট করুন; Firestore-এ পাসওয়ার্ড লিখবেন না।
-4. Authentication → Users থেকে Owner account-এর **UID** কপি করুন।
-5. Firestore Database → Data → Start collection: `admins`; Document ID হিসেবে ওই UID দিন। Field যোগ করুন: `active` (Boolean) = `true`। `admins` document শুধু Console থেকে Owner তৈরি করবে; website থেকে admin access দেওয়া যায় না।
-6. এই ZIP-এর `firestore.rules` এবং `storage.rules` Firebase Console-এর Rules tab-এ প্রকাশ করুন।
-7. GitHub Pages-এ `index.html`, `admin.html`, `app.js`, `style.css`, `firebase-config.js`, `firestore.rules`, `storage.rules`, `README-BN.md`, `.nojekyll` repository root-এ রাখুন।
-
-### Admin Panel-এ কীভাবে কাজ করবেন
-
-- `admin.html` খুলে Admin Login করুন।
-- **সার্ভিস ও মূল্য ম্যানেজমেন্ট:** সার্ভিসের নাম, বিবরণ, দাম, একক, ক্যাটাগরি এবং ওয়েবসাইটে দেখানো হবে কি না ঠিক করে Save করুন। দাম খালি রাখলে “দাম জানতে যোগাযোগ করুন”/কোটেশন দেখাবে।
-- **প্রাথমিক সার্ভিস যোগ:** শুরুতে আটটি সাধারণ সার্ভিস Firestore-এ যোগ করবে। এগুলোর দাম আগে থেকে অনুমান করে বসানো হয়নি; নিজের দোকানের সঠিক দাম বসান।
-- **দোকানের সেটিংস:** দোকানের নাম, bKash নম্বর, WhatsApp, ফোন, ঠিকানা ও নিয়মাবলি পরিবর্তন করে Save করুন। bKash নম্বর ডিফল্টভাবে ফাঁকা—পেমেন্ট নেওয়ার আগে নিজের সঠিক bKash নম্বর দিন। WhatsApp নম্বরের আন্তর্জাতিক country code website স্বয়ংক্রিয়ভাবে যোগ করে।
-- **অর্ডার ও পেমেন্ট:** অর্ডারের স্ট্যাটাস পরিবর্তন, Transaction ID যাচাই করে payment confirm এবং কাজের ফাইল আপলোড করুন। শুধু Transaction ID লেখা থাকলেই টাকা Confirm করবেন না; bKash transaction মিলিয়ে নিন।
-- **সার্ভিস পরিবর্তন:** ওয়েবসাইটের public service cards, order dropdown এবং price list Firestore-এর `services` collection থেকে আপডেট হবে। সেটিংস `siteSettings/main` document-এ সংরক্ষিত হবে।
-
-### Firebase data rules
-
-- `services`: সবাই পড়তে পারবে, কেবল Admin create/update/delete করতে পারবে।
-- `siteSettings`: public site contact/pricing guidance পড়তে পারবে, কেবল Admin পরিবর্তন করতে পারবে।
-- `admins`: ওয়েবসাইট থেকে create/update করা যায় না। Owner-এর UID এবং `active: true` অবশ্যই Firebase Console-এ তৈরি করতে হবে।
-- `orders` ও Storage files: কাস্টমার নিজের অর্ডার/ফাইল এবং Admin অনুমোদিত কাজগুলো দেখতে পারবে।
-
-**গুরুত্বপূর্ণ সীমাবদ্ধতা:** ZIP-এর code syntax এবং HTML/JS ID references পরীক্ষা করা হয়েছে, কিন্তু এই চ্যাট থেকে live Firebase authentication, database rules, payment verification বা GitHub Pages deployment চালিয়ে পরীক্ষা করা সম্ভব নয়। প্রকাশের পর test account দিয়ে registration, admin login, service price save, order submit, file upload এবং payment confirmation যাচাই করুন। Firebase Console-এ Rules publish না করলে Admin Panel-এর Save কাজ করবে না।
-
-
-## সমস্যা সমাধান: অর্ডার ও Admin Panel
-
-- Admin Panel থেকে নতুন সার্ভিস যোগ/দাম বদলানো/মুছতে পারবেন; প্রতিবার Firebase Console-এ গিয়ে সার্ভিস যোগ করার প্রয়োজন নেই। তবে প্রথমবার Firebase Authentication, `admins/{UID}` এবং ZIP-এর `firestore.rules` ও `storage.rules` একবার সঠিকভাবে সেটআপ ও Publish করতে হবে।
-- Firestore Rules-এ `allow read, write: if true;` ব্যবহার করবেন না। ZIP-এর `firestore.rules` এবং `storage.rules` Firebase Console-এর সংশ্লিষ্ট Rules ট্যাবে প্রকাশ করুন।
-- Admin Document: Collection `admins`, Document ID = Authentication-এর Admin UID, Boolean field `active` = `true`।
-- অর্ডার জমা দেওয়ার আগে Login করতে হবে এবং Profile-এ নাম ও ফোন নম্বর Save থাকতে হবে।
-- ফাইল আপলোডে সমস্যা হলেও অর্ডার তৈরি হয়ে গেলে ওয়েবসাইট এখন Order ID দেখাবে এবং ফাইল আপলোডের সমস্যা আলাদা করে জানাবে।
-- এই ZIP-এর কোড static/syntax check করা হয়েছে; লাইভ Firebase প্রজেক্টে Publish করে বাস্তব অর্ডার পরীক্ষা করা প্রয়োজন।
-
-
-## নতুন UI ও ফাইল ডেলিভারি আপডেট
-
-- প্রথমে Welcome Board / Login / Sign Up স্ক্রিন দেখাবে; লগইন না করা পর্যন্ত সাইটের মূল অংশ লুকানো থাকবে।
-- লগইনের পরে Login/Sign Up বাটন লুকিয়ে ডান পাশে Profile ও Logout থাকবে।
-- Login ও confirmation popup স্ক্রিনের ডান-উপর দিকে বড় আকারে দেখাবে।
-- আধুনিক ডিজিটাল সাউন্ড ব্রাউজারের অনুমতি অনুযায়ী বাজবে; Login popup-এর Sound ON/OFF বাটন দিয়ে বন্ধ/চালু করা যাবে।
-- Admin Panel-এর অর্ডার টেবিলে কাস্টমারের আপলোড করা ডকুমেন্টের আলাদা Open/Download বাটন থাকবে। Admin-এর আপলোড করা Work File কাস্টমারের নিজের Dashboard-এ দেখা যাবে।
-- কাস্টমারের ফাইলের metadata সংরক্ষণ করার জন্য `firestore.rules`-এ সীমিত owner-update অনুমতি যোগ করা হয়েছে।
-
-### গুরুত্বপূর্ণ: Firebase Rules আবার Publish করতে হবে
-
-এই ZIP আপলোড করার পরে Firebase Console-এ গিয়ে **Firestore Database → Rules**-এ এই ZIP-এর `firestore.rules` এবং **Storage → Rules**-এ `storage.rules` প্রকাশ করুন। আগে থেকে থাকা নিয়মের ব্যাকআপ রাখুন। `allow read, write: if true;` ব্যবহার করবেন না। Admin-এর জন্য `admins/{UID}` ডকুমেন্টে `active: true` (Boolean) থাকতে হবে।
-
-### ফাইল পরীক্ষা
-
-- অর্ডারের ডকুমেন্ট: Customer অর্ডারের সঙ্গে ফাইল দিলে Admin Panel-এর Customer files অংশে নামসহ বাটন দেখা যাবে।
-- Work File: Admin অর্ডার সারিতে ফাইল বেছে `Upload work file` চাপলে কাস্টমারের নিজের অর্ডার কার্ডে ফাইল বাটন দেখা যাবে।
-- ফাইল দেখা/ডাউনলোড না হলে প্রথমে Firestore এবং Storage Rules প্রকাশ হয়েছে কি না, Admin UID সঠিক কি না এবং অর্ডারে ফাইলের metadata আছে কি না যাচাই করুন।
-- কোড/ZIP স্থানীয়ভাবে পরীক্ষা করা হয়েছে; লাইভ Firebase প্রকল্পে বাস্তব অর্ডার, ফাইল ও লগইন পরীক্ষা এখনও করতে হবে।
+## 9. Nahid Computer AI Chat Bot (Firebase থেকে আলাদা)
+- `chatbot.js` এবং `index.html`/`style.css`-এ AI Chat widget যোগ করা হয়েছে। এটি ওয়েবসাইটের বিদ্যমান Firebase order/login কোড পরিবর্তন করে না; chatbot নিজে Firebase ব্যবহার করে না।
+- Gemini API key বসাতে `chatbot.js`-এর শুরুতে `GEMINI_API_KEY`-এর `PASTE_YOUR_GEMINI_API_KEY_HERE` বদলান। বর্তমান কোডে `gemini-2.5-flash` model ব্যবহার করা হয়েছে।
+- API key সরাসরি browser code-এ থাকলে সবাই সেটি দেখতে পারে। Google AI Studio-তে key/project-এর quota সীমা দিন, usage নিয়মিত দেখুন এবং এই key-তে billing যুক্ত করবেন না যদি খরচ চান না। Gemini API free-tier limits মডেল ও project অনুযায়ী বদলায়; আপনার সক্রিয় সীমা AI Studio-তে যাচাই করুন। অফিসিয়াল তথ্য: https://ai.google.dev/gemini-api/docs/rate-limits এবং https://ai.google.dev/gemini-api/docs/pricing
+- Chat-এ ⚙ চাপলে জ্ঞানভান্ডার সম্পাদনা করা যায়। তবে GitHub Pages-এর static website-এ localStorage-এ সেভ করা পরিবর্তন শুধু সেই browser/device-এ থাকে—সব কাস্টমারের জন্য Admin-এর পরিবর্তন প্রকাশ করার shared backend এখানে নেই। সকলের জন্য স্থায়ী পরিবর্তন করতে `DEFAULT_KNOWLEDGE`-এর তথ্য `chatbot.js`-এ আপডেট করে ZIP/repository পুনরায় publish করুন।
+- API key বসানোর আগে bot স্থানীয় fallback দিয়ে সার্ভিস/দাম/ঠিকানা/যোগাযোগের কিছু সাধারণ প্রশ্নের উত্তর দেবে; পূর্ণ AI উত্তর পেতে বৈধ API key প্রয়োজন।
