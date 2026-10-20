@@ -5,6 +5,7 @@
 export const firebaseConfig = {
   apiKey: "AIzaSyA1XKoOb1VXxYwuMRvr29eXC1tBC2Fe3b4",
   authDomain: "nahidv30-f15a9.firebaseapp.com",
+  databaseURL: "https://nahidv30-f15a9-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "nahidv30-f15a9",
   storageBucket: "nahidv30-f15a9.firebasestorage.app",
   messagingSenderId: "968626023422",
@@ -13,4 +14,4 @@ export const firebaseConfig = {
 };
 
 // Contact/payment number supplied for the site. This does not enable automatic bKash verification.
-export const BKASH_MERCHANT_NUMBER = "01324392059";
+export const BKASH_MERCHANT_NUMBER = ""; // Set the actual bKash number from Admin Panel before accepting payments.
