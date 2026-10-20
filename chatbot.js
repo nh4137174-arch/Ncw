@@ -3,7 +3,7 @@
  * For this direct-browser setup, replace GEMINI_API_KEY below with your own key.
  * WARNING: Anyone visiting the public site can inspect this key. Use a restricted key and quota.
  */
-const GEMINI_API_KEY = "PASTE_YOUR_GEMINI_API_KEY_HERE";
+const GEMINI_API_KEY = "AQ.Ab8RN6IrzlRbaARt4JvrwOyn6a6CIPP5HCwr6UnA24IzmnUrUg";
 const GEMINI_MODEL = "gemini-2.5-flash";
 const KNOWLEDGE_STORAGE_KEY = "nahidComputerAiKnowledgeV1";
 
