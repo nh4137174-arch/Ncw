@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn()
+        && firestore.exists(/databases/(default)/documents/admins/$(request.auth.uid))
+        && firestore.get(/databases/(default)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+    function ownsOrder(uid, orderId) {
+      return signedIn() && request.auth.uid == uid
+        && firestore.exists(/databases/(default)/documents/orders/$(orderId))
+        && firestore.get(/databases/(default)/documents/orders/$(orderId)).data.uid == uid;
+    }
+    match /orderFiles/{uid}/{orderId}/{fileName} {
+      allow read: if isAdmin() || ownsOrder(uid, orderId);
+      allow create, update: if (isAdmin() || ownsOrder(uid, orderId))
+        && request.resource.size <= 10 * 1024 * 1024;
+      allow delete: if isAdmin();
+    }
+    match /finalFiles/{uid}/{orderId}/{fileName} {
+      allow read: if isAdmin() || ownsOrder(uid, orderId);
+      allow create, update: if isAdmin() && request.resource.size <= 10 * 1024 * 1024;
+      allow delete: if isAdmin();
+    }
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

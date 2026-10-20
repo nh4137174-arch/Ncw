@@ -1,0 +1,50 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null; }
+    function isAdmin() {
+      return signedIn() && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.active == true;
+    }
+    function ownsOrder() { return signedIn() && resource.data.uid == request.auth.uid; }
+
+    match /services/{serviceId} {
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+    match /siteSettings/{settingsId} {
+      allow read: if true;
+      allow create, update: if isAdmin();
+      allow delete: if false;
+    }
+    match /profiles/{uid} {
+      allow read, create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+    match /admins/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      // Create the first owner record manually in Firebase Console. Clients cannot grant admin access.
+      allow write: if false;
+    }
+    match /orders/{orderId} {
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.orderStatus in ['Pending', 'Price Pending']
+        && request.resource.data.payment.status in ['pending', 'not_submitted']
+        && request.resource.data.finalFiles.size() == 0;
+      allow get, list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow update: if isAdmin() || (
+        ownsOrder()
+        && resource.data.orderStatus in ['Pending', 'Price Pending']
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['files', 'updatedAt'])
+        && request.resource.data.files.size() <= 10
+      ) || (
+        ownsOrder()
+        && resource.data.orderStatus == 'Pending'
+        && request.resource.data.orderStatus == 'Cancelled'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['orderStatus', 'updatedAt'])
+      );
+      allow delete: if false;
+    }
+  }
+}
