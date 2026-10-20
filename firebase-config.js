@@ -5,6 +5,7 @@
 export const firebaseConfig = {
   apiKey: "AIzaSyA1XKoOb1VXxYwuMRvr29eXC1tBC2Fe3b4",
   authDomain: "nahidv30-f15a9.firebaseapp.com",
+  databaseURL: "https://nahidv30-f15a9-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "nahidv30-f15a9",
   storageBucket: "nahidv30-f15a9.firebasestorage.app",
   messagingSenderId: "968626023422",

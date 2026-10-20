@@ -35,7 +35,6 @@ service cloud.firestore {
       allow get, list: if isAdmin() || (signedIn() && resource.data.uid == request.auth.uid);
       allow update: if isAdmin() || (
         ownsOrder()
-        && resource.data.orderStatus in ['Pending', 'Price Pending']
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['files', 'updatedAt'])
         && request.resource.data.files.size() <= 10
       ) || (

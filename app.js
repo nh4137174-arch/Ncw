@@ -88,6 +88,7 @@ $('siteSettingsForm')?.addEventListener('submit',async e=>{e.preventDefault();if
 
 async function recoverOrderFilesFromStorage(){
  if(!currentAdmin)return;
+ let recoveredTotal=0, recoveryErrors=0;
  for(const o of ordersCache){
   if(!o.uid||!o.id)continue;
   for(const kind of ['orderFiles','finalFiles']){
@@ -97,10 +98,17 @@ async function recoverOrderFilesFromStorage(){
     const existing=Array.isArray(o[key])?o[key]:[];
     const known=new Set(existing.map(f=>f.path||f.fullPath||''));
     const recovered=result.items.filter(item=>!known.has(item.fullPath)).map(item=>({name:item.name,path:item.fullPath,type:'',recovered:true}));
-    if(recovered.length){const merged=[...existing,...recovered];await updateDoc(doc(db,'orders',o.id),{[key]:merged,updatedAt:serverTimestamp()});o[key]=merged;console.info('Recovered missing file metadata',o.id,kind,recovered.length)}
-   }catch(err){console.warn('Storage file recovery skipped',kind,o.id,err.code||err.message)}
+    if(recovered.length){
+      const merged=[...existing,...recovered];
+      await updateDoc(doc(db,'orders',o.id),{[key]:merged,updatedAt:serverTimestamp()});
+      o[key]=merged; recoveredTotal+=recovered.length;
+      console.info('Recovered missing file metadata',o.id,kind,recovered.length);
+    }
+   }catch(err){recoveryErrors++;console.warn('Storage file recovery skipped',kind,o.id,err.code||err.message)}
   }
  }
+ if(recoveredTotal)console.info(`Recovered ${recoveredTotal} missing file record(s) from Storage.`);
+ if(recoveryErrors)console.warn(`${recoveryErrors} file recovery check(s) failed. Verify Storage Rules, Firestore Rules, and admins/{uid}.active=true.`);
 }
 
 function renderOrderCard(o){
